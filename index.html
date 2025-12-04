@@ -76,6 +76,10 @@ body {
 
 /* Card Normal */
 .step-card { 
+    position: relative; /* Necessário para o z-index funcionar */
+    z-index: 30;        /* Camada 30 (maior que a linha que é 10 e a bolinha que é 20) */
+    background-color: #111827; /* Garante fundo escuro sólido (cor gray-900) */
+    
     opacity: 0.4; 
     transform: scale(0.98); 
     transition: all 0.5s ease; 
@@ -714,3 +718,4 @@ footer { margin-top: auto; }
     </script>
 </body>
 </html>
+
