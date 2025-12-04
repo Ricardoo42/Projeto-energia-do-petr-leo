@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energia do Petróleo: Processo, Refinaria e Impactos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        /* --- Estilos do Pipeline (Processo) --- */
+        .pipeline-container { position: relative; min-height: 320vh; }
+        .pipeline-line {
+            width: 6px; background: #374151; position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 10;
+        }
+        .pipeline-progress {
+            width: 6px; background: #f59e0b; position: absolute; top: 0; left: 50%; transform: translateX(-50%); height: 0; z-index: 15; transition: height 0.1s linear;
+        }
+        .pipeline-node {
+            position: absolute; left: 50%; transform: translateX(-50%); width: 30px; height: 30px; border-radius: 50%; background-color: #4b5563; border: 5px solid #1f2937; z-index: 20; transition: all 0.4s ease;
+        }
+        .pipeline-node.active { background-color: #f59e0b; box-shadow: 0 0 25px #f59e0b; border-color: #fff; transform: translateX(-50%) scale(1.3); }
+        
+        /* Card Normal */
+        .step-card { 
+            opacity: 0.4; transform: scale(0.98); transition: all 0.5s ease; cursor: pointer;
+            padding: 1.5rem; 
+        }
+        .step-card:hover { transform: scale(1); border-color: #f59e0b; opacity: 0.8; }
+        .step-card.active { opacity: 1; transform: scale(1.02); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4); }
+        
+        .card-image {
+            height: 220px; width: 100%; object-fit: cover; border-radius: 0.5rem; margin-bottom: 1rem; border-bottom: 4px solid #f59e0b;
+        }
+
+        /* --- Animação de Fundo --- */
+        .bg-particles {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 0; pointer-events: none;
+        }
+        .particle {
+            position: absolute; bottom: -100px; background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 50%; animation: floatUp linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            20% { opacity: 0.4; }
+            100% { transform: translateY(-320vh) scale(1.5); opacity: 0; } 
+        }
+        .p1 { width: 100px; height: 100px; left: 10%; animation-duration: 20s; animation-delay: 0s; }
+        .p2 { width: 150px; height: 150px; left: 20%; animation-duration: 25s; animation-delay: 2s; }
+        .p3 { width: 80px; height: 80px; left: 35%; animation-duration: 15s; animation-delay: 5s; }
+        .p4 { width: 200px; height: 200px; left: 60%; animation-duration: 30s; animation-delay: 1s; }
+        .p5 { width: 120px; height: 120px; left: 80%; animation-duration: 22s; animation-delay: 3s; }
+        .p6 { width: 90px; height: 90px; left: 90%; animation-duration: 18s; animation-delay: 7s; }
+
+        /* --- Estilos da Refinaria --- */
+        .distillation-tower {
+            display: flex; flex-direction: column-reverse; border: 3px solid #4b5563; border-radius: 12px; overflow: hidden; position: relative; background: #1f2937; height: 500px;
+        }
+        .tower-level {
+            padding: 0.5rem; text-align: center; color: white; transition: all 0.2s ease; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-direction: column;
+        }
+        .tower-level span { font-size: 0.7rem; opacity: 0.8; }
+        
+        .level-gas-nat { background-color: #fecaca; height: 50px; color: #7f1d1d; }
+        .level-glp { background-color: #fca5a5; height: 60px; color: #7f1d1d; }
+        .level-nafta { background-color: #fbbf24; height: 70px; color: #78350f; }
+        .level-querosene { background-color: #34d399; height: 70px; color: #064e3b; }
+        .level-oleo-comb { background-color: #60a5fa; height: 80px; color: #1e3a8a; }
+        .level-oleo-lub { background-color: #818cf8; height: 80px; color: #312e81; }
+        .level-asfalto { background-color: #374151; height: 90px; color: #f3f4f6; }
+        
+        .tower-level:hover, .tower-level.active { transform: scale(1.02); z-index: 10; font-weight: bold; box-shadow: 0 0 15px rgba(0,0,0,0.5); border: 1px solid white; }
+        
+        /* Estruturas da Refinaria */
+        .structure-card {
+            background: #1f2937; border: 1px solid #374151; border-radius: 0.75rem; overflow: hidden; cursor: pointer; transition: all 0.3s;
+        }
+        .structure-card:hover { border-color: #f59e0b; transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
+        .structure-img { width: 100%; height: 220px; object-fit: cover; }
+        .structure-content { padding: 1rem; }
+
+        /* Estilos dos Cards de Impacto */
+        .impact-card {
+            background: #111827; border: 1px solid #374151; border-radius: 1rem; padding: 1.5rem; transition: transform 0.3s ease; height: 100%;
+        }
+        .impact-card:hover { transform: translateY(-5px); border-color: #f59e0b; }
+        .data-tag {
+            display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold; margin-bottom: 0.5rem;
+        }
+        .tag-env { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .tag-soc { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
+        .tag-eco { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
+
+        /* Modal / Expandido */
+        #modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal-content {
+            background: #1f2937; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto; border-radius: 1rem; border: 2px solid #f59e0b; transform: scale(0.9); transition: transform 0.3s ease;
+        }
+        #modal-overlay.open .modal-content { transform: scale(1); }
+
+        footer { margin-top: auto; }
+
+        /* Animações utilitárias */
+        .fade-in { animation: fadeIn 0.8s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 overflow-x-hidden">
+
+    <!-- Navegação Superior -->
+    <nav class="sticky top-0 z-50 bg-gray-900/95 backdrop-blur border-b border-gray-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <span class="text-xl font-bold text-amber-500 flex items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Fonte energética: Petróleo
+                </span>
+                <div class="flex space-x-2 md:space-x-4">
+                    <button onclick="switchView('processo')" id="btn-processo" class="nav-btn px-3 py-2 rounded-md text-xs md:text-sm font-medium bg-gray-800 text-white hover:bg-gray-700 transition-colors">O Processo</button>
+                    <!-- REFINARIA 2ª -->
+                    <button onclick="switchView('refinaria')" id="btn-refinaria" class="nav-btn px-3 py-2 rounded-md text-xs md:text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">Refinaria 360°</button>
+                    <!-- IMPACTOS 3ª -->
+                    <button onclick="switchView('impactos')" id="btn-impactos" class="nav-btn px-3 py-2 rounded-md text-xs md:text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">Impactos & Dados</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTAINER PRINCIPAL -->
+    <main class="relative flex-grow">
+
+        <!-- ========================================== -->
+        <!-- PÁGINA 1: O PROCESSO (Scroll Pipeline) -->
+        <!-- ========================================== -->
+        <section id="view-processo" class="view-section fade-in pb-20 relative overflow-hidden">
+            
+            <!-- Fundo Animado -->
+            <div class="bg-particles">
+                <div class="particle p1"></div>
+                <div class="particle p2"></div>
+                <div class="particle p3"></div>
+                <div class="particle p4"></div>
+                <div class="particle p5"></div>
+                <div class="particle p6"></div>
+            </div>
+            
+            <div class="text-center pt-20 pb-2 px-4 bg-gradient-to-b from-gray-900 via-gray-900 to-transparent relative z-10">
+                <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight">A Jornada da Energia</h1>
+                <p class="text-gray-400 max-w-2xl mx-auto text-lg">Do fundo do oceano até a tomada da sua casa. <br><span class="text-amber-500 font-semibold">Clique nos cards para expandir.</span></p>
+                <div class="mt-8 animate-bounce text-amber-500 text-2xl">↓</div>
+            </div>
+
+            <div id="pipeline-container" class="pipeline-container max-w-6xl mx-auto relative z-10">
+                <div class="pipeline-line"></div>
+                <div id="pipeline-progress" class="pipeline-progress"></div>
+
+                <!-- 1. Extração (2%) -->
+                <div class="step-wrapper absolute w-full" style="top: 2%;">
+                    <div class="pipeline-node" data-step="0"></div>
+                    <div class="step-card bg-gray-900 border border-gray-800 rounded-xl shadow-xl w-10/12 md:w-5/12 ml-auto md:mr-16 relative" onclick="openModal(this)">
+                        <img src="https://cdn.wilsonsons.com.br/wp-content/uploads/2020/11/tipos-de-plataformas-de-petroleo-scaled.jpeg" alt="Plataforma de Petróleo" class="card-image">
+                        <h3 class="text-3xl font-bold text-amber-500">1. Extração</h3>
+                        <p class="text-gray-300 mt-3 text-lg">A jornada começa em reservatórios subterrâneos ou submarinos. Plataformas e bombas "cavalinho" extraem o petróleo cru bruto da rocha porosa.</p>
+                        <p class="hidden text-gray-400 mt-4 text-sm full-text">O petróleo bruto é extraído através de perfuração profunda. A pressão natural ou a injeção de gás/água força o óleo para a superfície. Esta etapa envolve geofísica complexa e riscos ambientais elevados.</p>
+                    </div>
+                </div>
+
+                <!-- 2. Transporte (16%) -->
+                <div class="step-wrapper absolute w-full" style="top: 16%;">
+                    <div class="pipeline-node" data-step="1"></div>
+                    <div class="step-card bg-gray-900 border border-gray-800 rounded-xl shadow-xl w-10/12 md:w-5/12 mr-auto md:ml-16 relative" onclick="openModal(this)">
+                        <img src="https://media.investnews.com.br/uploads/2025/01/GettyImages-1381376333-min.jpg" alt="Navio Petroleiro" class="card-image">
+                        <h3 class="text-3xl font-bold text-amber-500">2. Transporte</h3>
+                        <p class="text-gray-300 mt-3 text-lg">Uma rede logística massiva de navios petroleiros, oleodutos transcontinentais e caminhões move a matéria-prima bruta para as refinarias.</p>
+                        <p class="hidden text-gray-400 mt-4 text-sm full-text">Navios VLCC (Very Large Crude Carriers) podem transportar até 2 milhões de barris. O transporte é monitorado via satélite para evitar vazamentos e garantir a eficiência logística global.</p>
+                    </div>
+                </div>
+
+                <!-- 3. Refino (30%) -->
+                <div class="step-wrapper absolute w-full" style="top: 30%;">
+                    <div class="pipeline-node" data-step="2"></div>
+                    <div class="step-card bg-gray-900 border border-gray-800 rounded-xl shadow-xl w-10/12 md:w-5/12 ml-auto md:mr-16" onclick="openModal(this)">
+                        <img src="https://assets.brasildefato.com.br/2024/09/image_processing20200731-4122-kq1e3i.jpeg" alt="Refinaria" class="card-image">
+                        <h3 class="text-3xl font-bold text-amber-500">3. Refino</h3>
+                        <p class="text-gray-300 mt-3 text-lg">Na refinaria, o óleo cru é aquecido e separado. Para usinas elétricas, usamos frações pesadas como o <strong>Óleo Combustível</strong> ou Diesel residual.</p>
+                        <p class="hidden text-gray-400 mt-4 text-sm full-text">O refino separa os hidrocarbonetos por ponto de ebulição. O óleo combustível é denso e fica no fundo da torre. Ele precisa de pré-aquecimento para fluir até os queimadores da usina.</p>
+                    </div>
+                </div>
+
+                <!-- 4. Combustão (44%) -->
+                <div class="step-wrapper absolute w-full" style="top: 44%;">
+                    <div class="pipeline-node" data-step="3"></div>
+                    <div class="step-card bg-gray-900 border border-gray-800 rounded-xl shadow-xl w-10/12 md:w-5/12 mr-auto md:ml-16" onclick="openModal(this)">
+                        <img src="https://img.freepik.com/fotos-premium/vista-de-uma-fabrica-de-refinaria-de-gas_1048944-15185571.jpg" alt="Fogo na Caldeira" class="card-image" style="border-color: #ef4444;">
+                        <h3 class="text-3xl font-bold text-red-500">4. Combustão</h3>
+                        <p class="text-gray-300 mt-3 text-lg">O combustível é pulverizado dentro de uma fornalha gigante. A queima libera energia química na forma de calor intenso (Energia Térmica).</p>
+                        <p class="hidden text-gray-400 mt-4 text-sm full-text">A temperatura na caldeira pode ultrapassar 1000°C. O controle da mistura ar-combustível é crucial para minimizar fuligem e maximizar a eficiência térmica da queima.</p>
+                    </div>
+                </div>
+
+                <!-- 5. Vaporização (58%) -->
+                <div class="step-wrapper absolute w-full" style="top: 58%;">
+                    <div class="pipeline-node" data-step="4"></div>
+                    <div class="step-card bg-gray-900 border border-gray-800 rounded-xl shadow-xl w-10/12 md:w-5/12 ml-auto md:mr-16" onclick="openModal(this)">
+                        <img src="https://idec.org.br/sites/default/files/dicasedireitos/usinas-termeletricas.jpg" alt="Vapor Industrial" class="card-image" style="border-color: #9ca3af;">
+                        <h3 class="text-3xl font-bold text-gray-200">5. Vaporização</h3>
+                        <p class="text-gray-300 mt-3 text-lg">Tubos de água revestem a caldeira. O calor transforma a água em vapor de alta pressão e temperatura, pronto para realizar trabalho.</p>
+                        <p class="hidden text-gray-400 mt-4 text-sm full-text">Utiliza-se água ultra-pura para evitar corrosão nas pás da turbina. O vapor gerado é "superaquecido", ou seja, seco e com altíssima energia cinética.</p>
+                    </div>
+                </div>
+
+                <!-- 6. Turbina & Gerador (72%) -->
+                <div class="step-wrapper absolute w-full" style="top: 72%;">
+                    <div class="pipeline-node" data-step="5"></div>
+                    <div class="step-card bg-gray-900 border border-gray-800 rounded-xl shadow-xl w-10/12 md:w-5/12 mr-auto md:ml-16" onclick="openModal(this)">
+                        <img src="https://petronoticias.com.br/wp-content/uploads/2018/10/turbinaGE-1-300x200.jpg" alt="Turbina" class="card-image" style="border-color: #3b82f6;">
+                        <h3 class="text-3xl font-bold text-blue-400">6. Conversão Eletromecânica</h3>
+                        <p class="text-gray-300 mt-3 text-lg">O vapor expande contra as pás da turbina (mecânica). O eixo da turbina gira um ímã gigante dentro de bobinas de cobre no gerador (elétrica).</p>
+                        <p class="hidden text-gray-400 mt-4 text-sm full-text">A turbina gira a 3000 ou 3600 RPM. É o coração da usina. O princípio é a Indução Eletromagnética de Faraday, convertendo movimento em elétrons fluindo.</p>
+                    </div>
+                </div>
+
+                <!-- 7. Transmissão (86%) -->
+                <div class="step-wrapper absolute w-full" style="top: 86%;">
+                    <div class="pipeline-node" data-step="6"></div>
+                    <div class="step-card bg-gray-900 border border-gray-800 rounded-xl shadow-xl w-10/12 md:w-5/12 ml-auto md:mr-16" onclick="openModal(this)">
+                        <img src="https://originaleletricidade.com.br/wp-content/uploads/2022/07/TRANSMI-3.jpg" alt="Linhas de Transmissão" class="card-image" style="border-color: #a855f7;">
+                        <h3 class="text-3xl font-bold text-purple-400">7. Transmissão</h3>
+                        <p class="text-gray-300 mt-3 text-lg">A voltagem é elevada por transformadores e a eletricidade viaja por linhas de alta tensão até as subestações, onde é distribuída para as cidades.</p>
+                        <p class="hidden text-gray-400 mt-4 text-sm full-text">A tensão é elevada (ex: 500.000 Volts) para minimizar perdas durante a viagem. Chegando na cidade, transformadores abaixam a tensão para 127V ou 220V para uso seguro.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- PÁGINA 2: REFINARIA (MOVIDA PARA SEGUNDA POSIÇÃO) -->
+        <!-- ========================================== -->
+        <section id="view-refinaria" class="view-section hidden fade-in py-12 px-4">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="text-3xl md:text-4xl font-bold text-center mb-2">Anatomia de uma Refinaria</h2>
+                <p class="text-center text-gray-400 mb-10 max-w-2xl mx-auto">Explore os componentes críticos. <span class="text-amber-500 font-bold">Clique nas imagens abaixo para expandir e ver detalhes.</span></p>
+
+                <div class="grid lg:grid-cols-2 gap-8 items-start mb-12">
+                    
+                    <!-- Coluna Esquerda: Torre de Destilação -->
+                    <div class="relative flex justify-center bg-gray-900/50 p-8 rounded-xl border border-gray-800">
+                        <div class="flex h-[500px] w-full max-w-md relative">
+                            <!-- Temperatura -->
+                            <div class="h-full flex flex-col justify-between items-end mr-4 py-4 text-xs text-gray-400 font-mono">
+                                <span>50°C <span class="text-red-400">➜</span></span>
+                                <span>120°C <span class="text-red-400">➜</span></span>
+                                <span>200°C <span class="text-red-400">➜</span></span>
+                                <span>250°C <span class="text-red-400">➜</span></span>
+                                <span>350°C <span class="text-red-400">➜</span></span>
+                                <span>400°C <span class="text-red-400">➜</span></span>
+                                <span>>400°C <span class="text-red-400">➜</span></span>
+                            </div>
+                            
+                            <!-- Torre -->
+                            <div class="distillation-tower flex-1 shadow-2xl">
+                                <div class="tower-level level-asfalto" onclick="showRefineryInfo('asfalto')">Asfalto <span>(>C35)</span></div>
+                                <div class="tower-level level-oleo-lub" onclick="showRefineryInfo('lubrificante')">Óleo Lubrificante <span>(C25-C35)</span></div>
+                                <div class="tower-level level-oleo-comb" onclick="showRefineryInfo('oleo_combustivel')">Óleo Combustível <span>(C12-C25)</span></div>
+                                <div class="tower-level level-querosene" onclick="showRefineryInfo('querosene')">Querosene <span>(C12-C18)</span></div>
+                                <div class="tower-level level-nafta" onclick="showRefineryInfo('nafta')">Nafta <span>(C5-C12)</span></div>
+                                <div class="tower-level level-glp" onclick="showRefineryInfo('glp')">GLP <span>(C3-C4)</span></div>
+                                <div class="tower-level level-gas-nat" onclick="showRefineryInfo('gas_natural')">Gás Natural <span>(C1-C2)</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna Direita: Info Box -->
+                    <div class="bg-gray-800 p-8 rounded-xl border border-gray-700 h-full flex flex-col justify-center shadow-xl">
+                        <div id="info-content" class="fade-in">
+                            <h3 id="info-title" class="text-3xl font-bold text-amber-500 mb-4">Torre de Destilação</h3>
+                            <p id="info-desc" class="text-gray-300 text-lg leading-relaxed mb-6">O coração da refinaria. A separação física acontece baseada no ponto de ebulição de cada hidrocarboneto.</p>
+                            <div id="info-usage" class="bg-gray-700/50 p-4 rounded-lg border-l-4 border-amber-500">
+                                <span class="text-xs uppercase tracking-wider text-gray-400">Função Principal</span>
+                                <p id="info-usage-text" class="text-white font-medium text-lg mt-1">Separar os componentes do petróleo cru.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 1: Outras Estruturas -->
+                <h3 class="text-2xl font-bold text-white mb-6 pl-2 border-l-4 border-blue-500">Outras Estruturas Essenciais (Clique para Detalhes)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+                    <!-- Cards de Estrutura (Forno, Tanques, Flare, Craqueamento) -->
+                    <div class="structure-card" onclick="openModal(this)">
+                        <img src="https://www.metalpo.com.br/wp-content/uploads/2020/09/Guamar%C3%A9.jpg" alt="Forno Industrial" class="structure-img">
+                        <div class="structure-content">
+                            <h4 class="font-bold text-lg text-white">Forno Industrial</h4>
+                            <p class="text-xs text-gray-400 mt-2">Aquece o petróleo cru a cerca de 400°C antes de entrar na torre.</p>
+                            <p class="hidden text-gray-400 mt-4 text-sm full-text"><strong class="text-white block mb-2">Detalhes Técnicos:</strong> O petróleo cru passa por serpentinas dentro do forno, onde é aquecido por queimadores.</p>
+                        </div>
+                    </div>
+                    <div class="structure-card" onclick="openModal(this)">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpxdCCBq9joS5RWUtzyMJTIFgAOZCLzRvNTQ&s" alt="Tanques" class="structure-img">
+                        <div class="structure-content">
+                            <h4 class="font-bold text-lg text-white">Parque de Tanques</h4>
+                            <p class="text-xs text-gray-400 mt-2">Armazenamento de petróleo bruto e refinados.</p>
+                            <p class="hidden text-gray-400 mt-4 text-sm full-text"><strong class="text-white block mb-2">Detalhes Técnicos:</strong> Tanques de teto flutuante eliminam o espaço de vapor, reduzindo evaporação.</p>
+                        </div>
+                    </div>
+                    <div class="structure-card" onclick="openModal(this)">
+                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiPS_sjbuBjY3f6znA3X2ZymnTlKQDXo0_9Fxib1f3iMfDG_Z0BQgFYR7KH5EbFWm63bnR-KJgnWfP3sWUWf3MbTWtgyiQ0BvQ6DZS_NLfIVEd6jNYTqHp44iQN6H8T3zeIjs5RjlEE3fI/s640/flares+refinaria.jpg" alt="Flare" class="structure-img">
+                        <div class="structure-content">
+                            <h4 class="font-bold text-lg text-white">Sistema de Flare</h4>
+                            <p class="text-xs text-gray-400 mt-2">Tocha de segurança que queima gases excedentes.</p>
+                            <p class="hidden text-gray-400 mt-4 text-sm full-text"><strong class="text-white block mb-2">Detalhes Técnicos:</strong> O Flare é o dispositivo de segurança final para alívio de pressão.</p>
+                        </div>
+                    </div>
+                    <div class="structure-card" onclick="openModal(this)">
+                        <img src="https://www.infoescola.com/wp-content/uploads/2017/05/craqueamento-petroleo-609110750.jpg" alt="Craqueamento" class="structure-img">
+                        <div class="structure-content">
+                            <h4 class="font-bold text-lg text-white">Craqueamento</h4>
+                            <p class="text-xs text-gray-400 mt-2">Unidade que "quebra" óleos pesados em gasolina.</p>
+                            <p class="hidden text-gray-400 mt-4 text-sm full-text"><strong class="text-white block mb-2">Detalhes Técnicos:</strong> O FCC usa catalisador superaquecido para quebrar moléculas longas.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOVA SEÇÃO: Usinas Termoquímicas -->
+                <h3 class="text-2xl font-bold text-white mb-6 pl-2 border-l-4 border-red-500">Da Refinaria à Eletricidade: Conversão Termoquímica</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    <!-- Card 1: Ciclo a Vapor -->
+                    <div class="structure-card" onclick="openModal(this)">
+                        <img src="https://arquivos.respondeai.com.br/seo-mirror/book-exercise/2023/47d3629c-095b-433d-8a41-5e36ba52dc49.webp" alt="Ciclo a Vapor" class="structure-img">
+                        <div class="structure-content">
+                            <h4 class="font-bold text-lg text-white">Ciclo a Vapor (Rankine)</h4>
+                            <p class="text-xs text-gray-400 mt-2">Caldeiras queimam óleo pesado para gerar vapor.</p>
+                            <p class="hidden text-gray-400 mt-4 text-sm full-text">
+                                <strong class="text-white block mb-2">Funcionamento:</strong>
+                                É o modelo mais tradicional. Queima-se Óleo Combustível (viscoso) em caldeiras tubulares. O calor vaporiza a água, e esse vapor expande em turbinas. Eficiência térmica média de 30-35%.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Turbina a Gás -->
+                    <div class="structure-card" onclick="openModal(this)">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Ciclybasico.jpg/360px-Ciclybasico.jpg" alt="Turbina a Gás" class="structure-img">
+                        <div class="structure-content">
+                            <h4 class="font-bold text-lg text-white">Ciclo a Gás (Brayton)</h4>
+                            <p class="text-xs text-gray-400 mt-2">Turbinas similares a jatos de avião. Partida rápida.</p>
+                            <p class="hidden text-gray-400 mt-4 text-sm full-text">
+                                <strong class="text-white block mb-2">Funcionamento:</strong>
+                                O ar é comprimido e misturado com diesel ou gás natural na câmara de combustão. Os gases quentes giram a turbina diretamente. Ideal para cobrir picos de demanda devido à sua rapidez de acionamento.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Ciclo Combinado -->
+                    <div class="structure-card" onclick="openModal(this)">
+                        <img src="https://mercuriopartners.com.br/wp-content/uploads/2023/04/ciclos-termodinamicos-termeletricas-1024x649.png" alt="Ciclo Combinado" class="structure-img">
+                        <div class="structure-content">
+                            <h4 class="font-bold text-lg text-white">Ciclo Combinado</h4>
+                            <p class="text-xs text-gray-400 mt-2">Reaproveita o calor para máxima eficiência.</p>
+                            <p class="hidden text-gray-400 mt-4 text-sm full-text">
+                                <strong class="text-white block mb-2">Funcionamento:</strong>
+                                O "estado da arte" em termelétricas. Os gases quentes que saem da turbina a gás não são jogados fora; eles passam por uma caldeira de recuperação para gerar vapor e girar uma segunda turbina. Eficiência superior a 50%.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Motores de Combustão -->
+                    <div class="structure-card" onclick="openModal(this)">
+                        <img src="https://autolivraria.com.br/bc/wp-content/uploads/2016/12/Turbina.jpg" alt="Geradores Diesel" class="structure-img">
+                        <div class="structure-content">
+                            <h4 class="font-bold text-lg text-white">Motores de Combustão</h4>
+                            <p class="text-xs text-gray-400 mt-2">Grandes motores diesel para sistemas isolados.</p>
+                            <p class="hidden text-gray-400 mt-4 text-sm full-text">
+                                <strong class="text-white block mb-2">Funcionamento:</strong>
+                                São motores de pistão gigantescos, similares aos de navios. Muito usados em locais remotos (como na Amazônia) onde não chegam linhas de transmissão. Robustos, mas com emissões locais significativas.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ========================================== -->
+        <!-- PÁGINA 3: IMPACTOS (MOVIDA PARA TERCEIRA POSIÇÃO) -->
+        <!-- ========================================== -->
+        <section id="view-impactos" class="view-section hidden fade-in py-12 px-4 max-w-7xl mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-4">Impactos Multidimensionais</h2>
+            <p class="text-center text-gray-400 mb-12">Análise baseada em dados globais e do contexto brasileiro.</p>
+
+            <div class="grid md:grid-cols-2 gap-6 mb-16">
+                <!-- CARD AMBIENTAL 1 -->
+                <div class="impact-card">
+                    <span class="data-tag tag-env">AMBIENTAL</span>
+                    <h3 class="text-2xl font-bold text-white mb-3">Emissões de GEE</h3> 
+                    <p class="text-gray-400 text-base mb-4">Termelétricas a óleo têm eficiência menor que gás, gerando mais poluição por energia produzida.</p> 
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="text-white">Óleo Combustível</span><span class="text-red-400 font-bold">800-900 gCO₂/kWh</span></div> 
+                            <div class="w-full bg-gray-800 rounded-full h-3"><div class="bg-red-500 h-3 rounded-full" style="width: 90%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="text-white">Gás Natural</span><span>~490 gCO₂/kWh</span></div> 
+                            <div class="w-full bg-gray-800 rounded-full h-3"><div class="bg-blue-500 h-3 rounded-full" style="width: 50%"></div></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- CARD AMBIENTAL 2 -->
+                <div class="impact-card">
+                    <span class="data-tag tag-env">AMBIENTAL / SAÚDE</span>
+                    <h3 class="text-2xl font-bold text-white mb-3">Poluição Ar e Água</h3> 
+                    <p class="text-gray-400 text-base mb-3">Liberação de SO₂ (Enxofre) e NOₓ causa chuva ácida e doenças respiratórias.</p> 
+                    <ul class="text-base text-gray-400 space-y-2 list-disc list-inside"> 
+                        <li><strong>Ar:</strong> Combustíveis fósseis ligados a ~5 milhões de mortes prematuras/ano globalmente.</li>
+                        <li><strong>Água:</strong> Térmicas respondem por ~50% da descarga térmica e química industrial em águas.</li>
+                    </ul>
+                </div>
+                <!-- CARD SOCIAL -->
+                <div class="impact-card">
+                    <span class="data-tag tag-soc">SOCIAL / EMPREGO</span>
+                    <h3 class="text-2xl font-bold text-white mb-3">Sociedade & Emprego</h3> 
+                    <div class="space-y-5">
+                        <div>
+                            <h4 class="text-lg font-semibold text-blue-300">Saúde Pública & Conflitos</h4> 
+                            <p class="text-sm text-gray-400">Poluição relaciona-se a 50-100 mil mortes/ano no Brasil.</p> 
+                        </div>
+                        <div class="border-t border-gray-700 pt-4">
+                            <h4 class="text-lg font-semibold text-blue-300">Emprego e Automação</h4> 
+                            <div class="bg-gray-800 p-4 rounded text-sm text-gray-300 mt-2"> 
+                                <p class="mb-1"><strong>Brasil:</strong> ~600 mil empregos na cadeia de Óleo e Gás.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- CARD ECONÔMICO -->
+                <div class="impact-card">
+                    <span class="data-tag tag-eco">ECONÔMICO</span>
+                    <h3 class="text-2xl font-bold text-white mb-3">Economia & Segurança</h3> 
+                    <div class="space-y-5">
+                        <div>
+                            <h4 class="text-lg font-semibold text-yellow-300">Custo Elevado (LCOE)</h4> 
+                            <p class="text-sm text-gray-400 mb-2">Energia cara e volátil comparada às renováveis.</p> 
+                            <div class="flex items-end space-x-2 h-20">
+                                <div class="w-1/2 bg-green-500/20 border border-green-500 rounded-t flex flex-col justify-end items-center pb-2 h-1/3">
+                                    <span class="text-xs font-bold text-green-400">$50 Solar</span> 
+                                </div>
+                                <div class="w-1/2 bg-red-500/20 border border-red-500 rounded-t flex flex-col justify-end items-center pb-2 h-full">
+                                    <span class="text-xs font-bold text-red-400">$200 Óleo</span> 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-700 pt-4">
+                            <h4 class="text-lg font-semibold text-yellow-300">Vulnerabilidade Energética</h4> 
+                            <ul class="text-sm text-gray-400 space-y-3 mt-2"> 
+                                <li class="flex items-start"><span class="mr-2 text-amber-500">⚠</span><span>Importação de Derivados.</span></li>
+                                <li class="flex items-start"><span class="mr-2 text-amber-500">⚠</span><span>Choques Externos.</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-6 text-center text-sm text-gray-600"> 
+                Fontes: IEA, IPCC, OMS, EPE (Brasil), ANP, Observatório do Clima.
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Rodapé Padronizado -->
+    <footer class="bg-gray-900 border-t border-gray-800 p-4 w-full mt-auto">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between relative">
+            <div class="flex items-center mb-4 md:mb-0 md:absolute md:left-0">
+                <div class="w-16 h-16 bg-white rounded-full border-2 border-amber-500/50 overflow-hidden p-2 flex items-center justify-center shadow-lg">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Logotipo_IFET.svg/386px-Logotipo_IFET.svg.png" onerror="this.src='MARCA_IFBA_CAMPUS_VERTICAL_negativaBRANCA_IRECE2.png'" alt="Logo IFBA Irecê" class="max-w-full max-h-full object-contain">
+                </div>
+            </div>
+            <div class="w-full text-center">
+                <p class="text-sm text-gray-400">Apresentação desenvolvida para fins educacionais</p>
+                <p class="text-xs text-gray-600 mt-1">Alana Rosa - Ariel Marques - Ricardo Bessa - Willian Júnior</p>
+            </div>
+            <div class="hidden md:block w-16"></div>
+        </div>
+    </footer>
+
+    <!-- Modal Overlay -->
+    <div id="modal-overlay" onclick="closeModal()">
+        <div class="modal-content p-6 relative" onclick="event.stopPropagation()">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl z-50 bg-gray-900 rounded-full w-8 h-8 flex items-center justify-center">&times;</button>
+            <div id="modal-body">
+                <!-- Conteúdo injetado via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Modal Logic ---
+        function openModal(element) {
+            const modalBody = document.getElementById('modal-body');
+            const content = element.innerHTML;
+            modalBody.innerHTML = content;
+            const hiddenTexts = modalBody.querySelectorAll('.hidden');
+            hiddenTexts.forEach(el => el.classList.remove('hidden'));
+            const img = modalBody.querySelector('img');
+            if(img) {
+                img.classList.remove('h-40', 'h-160', 'structure-img', 'card-image'); 
+                img.style.height = 'auto'; // Ajuste automático
+                img.style.maxHeight = '60vh'; // Limite visual
+                img.classList.add('w-full', 'object-contain', 'rounded-lg', 'mb-6', 'mx-auto');
+            }
+            const paragraphs = modalBody.querySelectorAll('p');
+            paragraphs.forEach(p => {
+                p.classList.replace('text-xs', 'text-base');
+                p.classList.replace('text-sm', 'text-lg');
+                p.classList.add('leading-relaxed', 'text-gray-300');
+            });
+            const headings = modalBody.querySelectorAll('h3, h4');
+            headings.forEach(h => {
+                h.classList.add('text-4xl', 'mb-6');
+            });
+            document.getElementById('modal-overlay').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('open');
+        }
+
+        // --- Lógica de Navegação (SPA) ---
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            const selectedSection = document.getElementById('view-' + viewId);
+            if(selectedSection) selectedSection.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-gray-800', 'text-white');
+                btn.classList.add('text-gray-300');
+            });
+            const activeBtn = document.getElementById('btn-' + viewId);
+            activeBtn.classList.remove('text-gray-300');
+            activeBtn.classList.add('bg-gray-800', 'text-white');
+
+            if(viewId === 'processo') { setTimeout(handleScroll, 100); }
+        }
+
+        // --- Dados da Refinaria ---
+        const refineryData = {
+            'gas_natural': { title: "Gás Natural (C1-C2)", desc: "Moléculas levíssimas que sobem ao topo (~50°C).", usage: "Geração de Energia, Uso doméstico." },
+            'glp': { title: "GLP (C3-C4)", desc: "Gás Liquefeito de Petróleo, condensa logo abaixo (~120°C).", usage: "Gás de Cozinha, Aquecimento." },
+            'nafta': { title: "Nafta (C5-C12)", desc: "Líquido intermediário (~150-200°C), base para petroquímica.", usage: "Produção de plásticos e químicos." },
+            'querosene': { title: "Querosene (C12-C18)", desc: "Fração média (~200-250°C).", usage: "Combustível de Aviação (QAV), Iluminação." },
+            'oleo_combustivel': { title: "Óleo Combustível (C12-C25)", desc: "Fração pesada (~250-350°C), usada em usinas.", usage: "Termelétricas, Navios, Caldeiras." },
+            'lubrificante': { title: "Óleo Lubrificante (C25-C35)", desc: "Fração viscosa (~350-400°C).", usage: "Óleos de motor, graxas industriais." },
+            'asfalto': { title: "Asfalto (>C35)", desc: "Resíduo de fundo (>400°C). Sólido/semissólido em temperatura ambiente.", usage: "Pavimentação, Impermeabilização." },
+        };
+
+        function updateInfoBox(key) {
+            const data = refineryData[key];
+            if(!data) return;
+            const contentDiv = document.getElementById('info-content');
+            contentDiv.style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('info-title').innerText = data.title;
+                document.getElementById('info-desc').innerText = data.desc;
+                document.getElementById('info-usage-text').innerText = data.usage;
+                contentDiv.style.opacity = '1';
+            }, 200);
+        }
+
+        function showRefineryInfo(key) {
+            updateInfoBox(key);
+            document.querySelectorAll('.tower-level').forEach(el => el.classList.remove('active'));
+        }
+
+        // --- Lógica do Pipeline (Processo) ---
+        const pipelineContainer = document.getElementById('pipeline-container');
+        const progressBar = document.getElementById('pipeline-progress');
+        const nodes = document.querySelectorAll('.pipeline-node');
+        const cards = document.querySelectorAll('.step-card');
+
+        function handleScroll() {
+            if(document.getElementById('view-processo').classList.contains('hidden')) return;
+            const containerRect = pipelineContainer.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            let progress = (viewportHeight/2 - containerRect.top) / containerRect.height;
+            progress = Math.max(0, Math.min(1, progress));
+            progressBar.style.height = (progress * 100) + '%';
+            document.querySelectorAll('.step-wrapper').forEach((wrapper, idx) => {
+                const styleTop = parseFloat(wrapper.style.top); 
+                const currentProgressPercent = progress * 100;
+                if (currentProgressPercent >= styleTop - 3) { 
+                    nodes[idx].classList.add('active');
+                    cards[idx].classList.add('active');
+                } else {
+                    nodes[idx].classList.remove('active');
+                    cards[idx].classList.remove('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', handleScroll);
+        switchView('processo');
+    </script>
+</body>
+</html>
