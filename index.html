@@ -6,107 +6,213 @@
     <title>Energia do Petróleo: Processo, Refinaria e Impactos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
-        
-        /* --- Estilos do Pipeline (Processo) --- */
-        .pipeline-container { position: relative; min-height: 320vh; }
-        .pipeline-line {
-            width: 6px; background: #374151; position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 10;
-        }
-        .pipeline-progress {
-            width: 6px; background: #f59e0b; position: absolute; top: 0; left: 50%; transform: translateX(-50%); height: 0; z-index: 15; transition: height 0.1s linear;
-        }
-        .pipeline-node {
-            position: absolute; left: 50%; transform: translateX(-50%); width: 30px; height: 30px; border-radius: 50%; background-color: #4b5563; border: 5px solid #1f2937; z-index: 20; transition: all 0.4s ease;
-        }
-        .pipeline-node.active { background-color: #f59e0b; box-shadow: 0 0 25px #f59e0b; border-color: #fff; transform: translateX(-50%) scale(1.3); }
-        
-        /* Card Normal */
-        .step-card { 
-            opacity: 0.4; transform: scale(0.98); transition: all 0.5s ease; cursor: pointer;
-            padding: 1.5rem; 
-        }
-        .step-card:hover { transform: scale(1); border-color: #f59e0b; opacity: 0.8; }
-        .step-card.active { opacity: 1; transform: scale(1.02); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4); }
-        
-        .card-image {
-            height: 220px; width: 100%; object-fit: cover; border-radius: 0.5rem; margin-bottom: 1rem; border-bottom: 4px solid #f59e0b;
-        }
+/* =========================================
+   ARQUIVO CSS - Energia do Petróleo
+   ========================================= */
 
-        /* --- Animação de Fundo --- */
-        .bg-particles {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 0; pointer-events: none;
-        }
-        .particle {
-            position: absolute; bottom: -100px; background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(0,0,0,0) 70%);
-            border-radius: 50%; animation: floatUp linear infinite;
-        }
-        @keyframes floatUp {
-            0% { transform: translateY(0) scale(1); opacity: 0; }
-            20% { opacity: 0.4; }
-            100% { transform: translateY(-320vh) scale(1.5); opacity: 0; } 
-        }
-        .p1 { width: 100px; height: 100px; left: 10%; animation-duration: 20s; animation-delay: 0s; }
-        .p2 { width: 150px; height: 150px; left: 20%; animation-duration: 25s; animation-delay: 2s; }
-        .p3 { width: 80px; height: 80px; left: 35%; animation-duration: 15s; animation-delay: 5s; }
-        .p4 { width: 200px; height: 200px; left: 60%; animation-duration: 30s; animation-delay: 1s; }
-        .p5 { width: 120px; height: 120px; left: 80%; animation-duration: 22s; animation-delay: 3s; }
-        .p6 { width: 90px; height: 90px; left: 90%; animation-duration: 18s; animation-delay: 7s; }
+body { 
+    font-family: 'Inter', sans-serif; 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 100vh; 
+}
 
-        /* --- Estilos da Refinaria --- */
-        .distillation-tower {
-            display: flex; flex-direction: column-reverse; border: 3px solid #4b5563; border-radius: 12px; overflow: hidden; position: relative; background: #1f2937; height: 500px;
-        }
-        .tower-level {
-            padding: 0.5rem; text-align: center; color: white; transition: all 0.2s ease; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-direction: column;
-        }
-        .tower-level span { font-size: 0.7rem; opacity: 0.8; }
-        
-        .level-gas-nat { background-color: #fecaca; height: 50px; color: #7f1d1d; }
-        .level-glp { background-color: #fca5a5; height: 60px; color: #7f1d1d; }
-        .level-nafta { background-color: #fbbf24; height: 70px; color: #78350f; }
-        .level-querosene { background-color: #34d399; height: 70px; color: #064e3b; }
-        .level-oleo-comb { background-color: #60a5fa; height: 80px; color: #1e3a8a; }
-        .level-oleo-lub { background-color: #818cf8; height: 80px; color: #312e81; }
-        .level-asfalto { background-color: #374151; height: 90px; color: #f3f4f6; }
-        
-        .tower-level:hover, .tower-level.active { transform: scale(1.02); z-index: 10; font-weight: bold; box-shadow: 0 0 15px rgba(0,0,0,0.5); border: 1px solid white; }
-        
-        /* Estruturas da Refinaria */
-        .structure-card {
-            background: #1f2937; border: 1px solid #374151; border-radius: 0.75rem; overflow: hidden; cursor: pointer; transition: all 0.3s;
-        }
-        .structure-card:hover { border-color: #f59e0b; transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
-        .structure-img { width: 100%; height: 220px; object-fit: cover; }
-        .structure-content { padding: 1rem; }
+/* --- Estilos do Pipeline (Processo) --- */
+.pipeline-container { 
+    position: relative; 
+    /* Desktop: altura normal */
+    min-height: 320vh; 
+}
 
-        /* Estilos dos Cards de Impacto */
-        .impact-card {
-            background: #111827; border: 1px solid #374151; border-radius: 1rem; padding: 1.5rem; transition: transform 0.3s ease; height: 100%;
-        }
-        .impact-card:hover { transform: translateY(-5px); border-color: #f59e0b; }
-        .data-tag {
-            display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold; margin-bottom: 0.5rem;
-        }
-        .tag-env { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
-        .tag-soc { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
-        .tag-eco { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
+/* --- MOBILE FIX: Aumentar a altura do container --- */
+@media (max-width: 768px) {
+    .pipeline-container {
+        /* No celular, os cards ficam mais altos porque o texto quebra linha.
+           Precisamos esticar muito o fundo para os % de distância funcionarem */
+        min-height: 550vh; 
+    }
+}
 
-        /* Modal / Expandido */
-        #modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-        }
-        #modal-overlay.open { opacity: 1; pointer-events: all; }
-        .modal-content {
-            background: #1f2937; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto; border-radius: 1rem; border: 2px solid #f59e0b; transform: scale(0.9); transition: transform 0.3s ease;
-        }
-        #modal-overlay.open .modal-content { transform: scale(1); }
+.pipeline-line {
+    width: 6px; 
+    background: #374151; 
+    position: absolute; 
+    top: 0; bottom: 0; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    z-index: 10;
+}
 
-        footer { margin-top: auto; }
+.pipeline-progress {
+    width: 6px; 
+    background: #f59e0b; 
+    position: absolute; 
+    top: 0; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    height: 0; 
+    z-index: 15; 
+    transition: height 0.1s linear;
+}
 
-        /* Animações utilitárias */
-        .fade-in { animation: fadeIn 0.8s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.pipeline-node {
+    position: absolute; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    width: 30px; height: 30px; 
+    border-radius: 50%; 
+    background-color: #4b5563; 
+    border: 5px solid #1f2937; 
+    z-index: 20; 
+    transition: all 0.4s ease;
+}
+
+.pipeline-node.active { 
+    background-color: #f59e0b; 
+    box-shadow: 0 0 25px #f59e0b; 
+    border-color: #fff; 
+    transform: translateX(-50%) scale(1.3); 
+}
+
+/* Card Normal */
+.step-card { 
+    opacity: 0.4; 
+    transform: scale(0.98); 
+    transition: all 0.5s ease; 
+    cursor: pointer;
+    padding: 1.5rem; 
+}
+
+.step-card:hover { 
+    transform: scale(1); 
+    border-color: #f59e0b; 
+    opacity: 0.8; 
+}
+
+.step-card.active { 
+    opacity: 1; 
+    transform: scale(1.02); 
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4); 
+}
+
+.card-image {
+    height: 220px; 
+    width: 100%; 
+    object-fit: cover; 
+    border-radius: 0.5rem; 
+    margin-bottom: 1rem; 
+    border-bottom: 4px solid #f59e0b;
+}
+
+/* --- MOBILE FIX: Ajustes dos Cards no Celular --- */
+@media (max-width: 768px) {
+    .step-card {
+        /* Garante que o card ocupe quase toda a largura */
+        width: 90% !important; 
+        /* Centraliza o card ignorando o 'mr-auto' do HTML */
+        margin-left: 5% !important; 
+        margin-right: 5% !important;
+        /* Fundo mais escuro para ler melhor sobre a linha */
+        background-color: rgba(17, 24, 39, 0.95); 
+        z-index: 25; /* Fica acima da linha do pipeline */
+    }
+    
+    .card-image {
+        height: 180px; /* Imagem um pouco menor no celular */
+    }
+
+    h1 { font-size: 2rem !important; line-height: 1.2; } /* Título menor */
+}
+
+/* --- Animação de Fundo --- */
+.bg-particles {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 0; pointer-events: none;
+}
+.particle {
+    position: absolute; bottom: -100px; background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(0,0,0,0) 70%);
+    border-radius: 50%; animation: floatUp linear infinite;
+}
+@keyframes floatUp {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    20% { opacity: 0.4; }
+    100% { transform: translateY(-320vh) scale(1.5); opacity: 0; } 
+}
+.p1 { width: 100px; height: 100px; left: 10%; animation-duration: 20s; animation-delay: 0s; }
+.p2 { width: 150px; height: 150px; left: 20%; animation-duration: 25s; animation-delay: 2s; }
+.p3 { width: 80px; height: 80px; left: 35%; animation-duration: 15s; animation-delay: 5s; }
+.p4 { width: 200px; height: 200px; left: 60%; animation-duration: 30s; animation-delay: 1s; }
+.p5 { width: 120px; height: 120px; left: 80%; animation-duration: 22s; animation-delay: 3s; }
+.p6 { width: 90px; height: 90px; left: 90%; animation-duration: 18s; animation-delay: 7s; }
+
+/* --- Estilos da Refinaria --- */
+.distillation-tower {
+    display: flex; flex-direction: column-reverse; border: 3px solid #4b5563; border-radius: 12px; overflow: hidden; position: relative; background: #1f2937; 
+    height: 500px;
+}
+.tower-level {
+    padding: 0.5rem; text-align: center; color: white; transition: all 0.2s ease; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-direction: column;
+}
+.tower-level span { font-size: 0.7rem; opacity: 0.8; }
+
+.level-gas-nat { background-color: #fecaca; height: 50px; color: #7f1d1d; }
+.level-glp { background-color: #fca5a5; height: 60px; color: #7f1d1d; }
+.level-nafta { background-color: #fbbf24; height: 70px; color: #78350f; }
+.level-querosene { background-color: #34d399; height: 70px; color: #064e3b; }
+.level-oleo-comb { background-color: #60a5fa; height: 80px; color: #1e3a8a; }
+.level-oleo-lub { background-color: #818cf8; height: 80px; color: #312e81; }
+.level-asfalto { background-color: #374151; height: 90px; color: #f3f4f6; }
+
+.tower-level:hover, .tower-level.active { transform: scale(1.02); z-index: 10; font-weight: bold; box-shadow: 0 0 15px rgba(0,0,0,0.5); border: 1px solid white; }
+
+/* Estruturas da Refinaria */
+.structure-card {
+    background: #1f2937; border: 1px solid #374151; border-radius: 0.75rem; overflow: hidden; cursor: pointer; transition: all 0.3s;
+}
+.structure-card:hover { border-color: #f59e0b; transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
+.structure-img { width: 100%; height: 220px; object-fit: cover; }
+.structure-content { padding: 1rem; }
+
+/* Estilos dos Cards de Impacto */
+.impact-card {
+    background: #111827; border: 1px solid #374151; border-radius: 1rem; padding: 1.5rem; transition: transform 0.3s ease; height: 100%;
+}
+.impact-card:hover { transform: translateY(-5px); border-color: #f59e0b; }
+.data-tag {
+    display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold; margin-bottom: 0.5rem;
+}
+.tag-env { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+.tag-soc { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
+.tag-eco { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
+
+/* Modal / Expandido */
+#modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+}
+#modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal-content {
+    background: #1f2937; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto; border-radius: 1rem; border: 2px solid #f59e0b; transform: scale(0.9); transition: transform 0.3s ease;
+}
+#modal-overlay.open .modal-content { transform: scale(1); }
+
+footer { margin-top: auto; }
+
+/* Animações utilitárias */
+.fade-in { animation: fadeIn 0.8s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- MOBILE FIX: Correção do Nav --- */
+@media (max-width: 768px) {
+    nav .flex.items-center.justify-between {
+        flex-direction: column;
+        gap: 10px;
+        height: auto;
+        padding: 10px 0;
+    }
+    nav button {
+        font-size: 0.7rem; /* Letra menor no menu */
+        padding: 6px 10px;
+    }
+}
     </style>
 </head>
 <body class="bg-gray-950 text-gray-100 overflow-x-hidden">
@@ -173,7 +279,7 @@
                 <div class="step-wrapper absolute w-full" style="top: 16%;">
                     <div class="pipeline-node" data-step="1"></div>
                     <div class="step-card bg-gray-900 border border-gray-800 rounded-xl shadow-xl w-10/12 md:w-5/12 mr-auto md:ml-16 relative" onclick="openModal(this)">
-                        <img src="https://us.123rf.com/450wm/maxxyustas/maxxyustas1903/maxxyustas190300044/121028022-v%C3%A1lvulas-de-linha-de-tubula%C3%A7%C3%A3o-de-g%C3%A1s-amarelo-extra%C3%A7%C3%A3o-produ%C3%A7%C3%A3o-e-transporte-de-petr%C3%B3leo-e-g%C3%A1s.jpg?ver=6" alt="Navio Petroleiro" class="card-image">
+                        <img src="https://media.investnews.com.br/uploads/2025/01/GettyImages-1381376333-min.jpg" alt="Navio Petroleiro" class="card-image">
                         <h3 class="text-3xl font-bold text-amber-500">2. Transporte</h3>
                         <p class="text-gray-300 mt-3 text-lg">Uma rede logística massiva de navios petroleiros, oleodutos transcontinentais e caminhões move a matéria-prima bruta para as refinarias.</p>
                         <p class="hidden text-gray-400 mt-4 text-sm full-text">Navios VLCC (Very Large Crude Carriers) podem transportar até 2 milhões de barris. O transporte é monitorado via satélite para evitar vazamentos e garantir a eficiência logística global.</p>
@@ -608,5 +714,3 @@
     </script>
 </body>
 </html>
-
-
